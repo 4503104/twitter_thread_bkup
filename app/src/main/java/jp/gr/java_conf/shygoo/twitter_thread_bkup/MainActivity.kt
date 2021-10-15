@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun prepareGoogleSignIn() {
         val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
+            .requestScopes(Scope(SHEETS_API_ENDPOINT))
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, options)
 
@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
             // Already signed in
             signInButton.isVisible = false
             signOutButton.isVisible = true
-            mainMessage.text = getString(R.string.signed_in, account.email)
+            mainMessage.text = getString(R.string.already_signed_in_message, account.displayName)
         }
     }
 
@@ -78,5 +78,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
+        /** Read & Write endpoint. https://developers.google.com/sheets/api/guides/authorizing */
+        private const val SHEETS_API_ENDPOINT = "https://www.googleapis.com/auth/spreadsheets"
     }
 }
