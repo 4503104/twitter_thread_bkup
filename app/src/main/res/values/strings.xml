@@ -3,4 +3,7 @@
     <string name="sign_in_message">Please Sign In</string>
     <string name="sign_out">Sign Out</string>
     <string name="already_signed_in_message">Hello, %1$s!</string>
+    <string name="input_sheet_url_hint">Input your SpreadSheet URL</string>
+    <string name="backup">Back Up</string>
+    <string name="error_message_invalid_url">Invalid URL.</string>
 </resources>
