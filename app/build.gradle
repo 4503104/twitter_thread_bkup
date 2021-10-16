@@ -6,6 +6,9 @@ plugins {
 android {
     compileSdk 30
 
+    Properties localProperties = new Properties()
+    localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+
     defaultConfig {
         applicationId "jp.gr.java_conf.shygoo.twitter_thread_bkup"
         minSdk 21
@@ -14,6 +17,10 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "TWITTER_API_KEY", "\"${localProperties.getProperty('TWITTER_API_KEY')}\""
+        buildConfigField "String", "TWITTER_API_KEY_SECRET", "\"${localProperties.getProperty('TWITTER_API_KEY_SECRET')}\""
+        buildConfigField "String", "TWITTER_BEARER_TOKEN", "\"${localProperties.getProperty('TWITTER_BEARER_TOKEN')}\""
     }
 
     buildTypes {

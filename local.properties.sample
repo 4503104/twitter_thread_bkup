@@ -1,0 +1,5 @@
+sdk.dir=/Users/MyName/Library/Android/sdk
+
+TWITTER_API_KEY=foo
+TWITTER_API_KEY_SECRET=bar
+TWITTER_BEARER_TOKEN=baz
