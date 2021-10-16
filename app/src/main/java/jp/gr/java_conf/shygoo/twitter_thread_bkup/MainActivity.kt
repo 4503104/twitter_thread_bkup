@@ -12,6 +12,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.Group
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -19,15 +20,30 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.json.jackson2.JacksonFactory
+import com.google.api.services.sheets.v4.Sheets
+import com.google.api.services.sheets.v4.SheetsScopes
+import com.google.api.services.sheets.v4.model.ValueRange
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Collections
+import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var googleSignInClient: GoogleSignInClient
     private val mainMessage: TextView by lazy { findViewById(R.id.main_message) }
     private val signInButton: SignInButton by lazy { findViewById(R.id.sign_in_button) }
     private val signOutButton: Button by lazy { findViewById(R.id.sign_out_button) }
     private val urlFormGroup: Group by lazy { findViewById(R.id.url_form_group) }
     private val sheetUrlForm: EditText by lazy { findViewById(R.id.sheet_url_form) }
     private val backUpButton: Button by lazy { findViewById(R.id.backup_button) }
+    private val credential: GoogleAccountCredential by lazy {
+        GoogleAccountCredential.usingOAuth2(this, Collections.singleton(SheetsScopes.SPREADSHEETS))
+    }
+
+    private lateinit var googleSignInClient: GoogleSignInClient
 
     private val startSignIn = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -46,13 +62,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        backUpButton.setOnClickListener { executeBackUp() }
         prepareGoogleSignIn()
     }
 
     private fun prepareGoogleSignIn() {
         val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestScopes(Scope(SHEETS_API_ENDPOINT))
+            .requestScopes(Scope(SheetsScopes.SPREADSHEETS))
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, options)
 
@@ -74,6 +89,7 @@ class MainActivity : AppCompatActivity() {
             signInButton.isVisible = false
             signOutButton.isVisible = true
             urlFormGroup.isVisible = true
+            backUpButton.setOnClickListener { executeBackUp(account) }
             mainMessage.text = getString(R.string.already_signed_in_message, account.displayName)
         }
     }
@@ -87,13 +103,22 @@ class MainActivity : AppCompatActivity() {
         updateUi(null)
     }
 
-    private fun executeBackUp() {
-        val maybeSheetId = parseSheetIdFromInputUrl()
-        if (maybeSheetId == null) {
+    private fun executeBackUp(account: GoogleSignInAccount) {
+        val sheetId = parseSheetIdFromInputUrl()
+        if (sheetId == null) {
             showToast(R.string.error_message_invalid_url)
             return
         }
-        showToast("id: $maybeSheetId")
+
+        backUpButton.isEnabled = false
+
+        lifecycleScope.launch {
+            val isSucceeded = writeSomethingTo(account, sheetId)
+            withContext(Dispatchers.Main) {
+                showToast(if (isSucceeded) R.string.done_message else R.string.error_message_failed)
+                backUpButton.isEnabled = true
+            }
+        }
     }
 
     private fun parseSheetIdFromInputUrl(): String? {
@@ -109,6 +134,39 @@ class MainActivity : AppCompatActivity() {
         return pathSegments[SHEET_URL_SHEET_ID_POSITION]
     }
 
+    private suspend fun writeSomethingTo(
+        signInAccount: GoogleSignInAccount,
+        sheetId: String
+    ): Boolean = withContext(Dispatchers.IO) {
+        credential.selectedAccount = signInAccount.account
+        val sheetsApi = Sheets
+            .Builder(NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+            .setApplicationName(getString(R.string.app_name))
+            .build()
+
+        val range = "A1:B100"
+
+        val dummyValues: MutableList<List<Any>> = mutableListOf()
+        for (i in 1..100) {
+            dummyValues.add(listOf("$i.", UUID.randomUUID().toString()))
+        }
+        val contents = ValueRange()
+            .setValues(dummyValues)
+            .setMajorDimension("ROWS")
+
+        try {
+            sheetsApi.spreadsheets()
+                .values()
+                .update(sheetId, range, contents)
+                .setValueInputOption("RAW")
+                .execute()
+            return@withContext true
+        } catch (e: Exception) {
+            Log.e(TAG, "Backup failed.", e)
+        }
+        return@withContext false
+    }
+
     private fun showToast(@StringRes messageId: Int) = showToast(getString(messageId))
 
     private fun showToast(message: String) =
@@ -116,8 +174,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
-        /** Read & Write endpoint. https://developers.google.com/sheets/api/guides/authorizing */
-        private const val SHEETS_API_ENDPOINT = "https://www.googleapis.com/auth/spreadsheets"
 
         private const val SHEET_URL_SCHEME = "https"
         private const val SHEET_URL_HOST = "docs.google.com"
