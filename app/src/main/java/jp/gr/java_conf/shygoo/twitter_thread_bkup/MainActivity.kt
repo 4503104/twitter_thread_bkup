@@ -36,7 +36,8 @@ class MainActivity : AppCompatActivity() {
     private val mainMessage: TextView by lazy { findViewById(R.id.main_message) }
     private val signInButton: SignInButton by lazy { findViewById(R.id.sign_in_button) }
     private val signOutButton: Button by lazy { findViewById(R.id.sign_out_button) }
-    private val urlFormGroup: Group by lazy { findViewById(R.id.url_form_group) }
+    private val signedInUI: Group by lazy { findViewById(R.id.ui_for_signed_in_user) }
+    private val tweetUrlForm: EditText by lazy { findViewById(R.id.tweet_url_form) }
     private val sheetUrlForm: EditText by lazy { findViewById(R.id.sheet_url_form) }
     private val backUpButton: Button by lazy { findViewById(R.id.backup_button) }
     private val credential: GoogleAccountCredential by lazy {
@@ -81,14 +82,12 @@ class MainActivity : AppCompatActivity() {
         if (account == null) {
             // Not signed yet
             signInButton.isVisible = true
-            signOutButton.isVisible = false
-            urlFormGroup.isVisible = false
+            signedInUI.isVisible = false
             mainMessage.text = getString(R.string.sign_in_message)
         } else {
             // Already signed in
             signInButton.isVisible = false
-            signOutButton.isVisible = true
-            urlFormGroup.isVisible = true
+            signedInUI.isVisible = true
             backUpButton.setOnClickListener { executeBackUp(account) }
             mainMessage.text = getString(R.string.already_signed_in_message, account.displayName)
         }
@@ -104,11 +103,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun executeBackUp(account: GoogleSignInAccount) {
-        val sheetId = parseSheetIdFromInputUrl()
-        if (sheetId == null) {
-            showToast(R.string.error_message_invalid_url)
+        val tweetId = parseTweetIdFromInputUrl()
+        if (tweetId == null) {
+            showToast(R.string.error_message_invalid_tweet_url)
             return
         }
+        Log.d(TAG, "Tweet ID: $tweetId")
+
+        val sheetId = parseSheetIdFromInputUrl()
+        if (sheetId == null) {
+            showToast(R.string.error_message_invalid_sheet_url)
+            return
+        }
+        Log.d(TAG, "Sheet ID: $sheetId")
 
         backUpButton.isEnabled = false
 
@@ -119,6 +126,20 @@ class MainActivity : AppCompatActivity() {
                 backUpButton.isEnabled = true
             }
         }
+    }
+
+    private fun parseTweetIdFromInputUrl(): String? {
+        val maybeUrl = tweetUrlForm.text?.toString()
+        if (maybeUrl.isNullOrEmpty() || maybeUrl.matches(TWEET_URL_REGEX).not()) {
+            return null
+        }
+        val uri = Uri.parse(maybeUrl)
+        val pathSegments = uri.pathSegments
+        val statusIndex = pathSegments.indexOfLast { it.matches(TWEET_URL_REGEX_PATH_BEFORE_ID) }
+        if (statusIndex < 0 || statusIndex == pathSegments.lastIndex) {
+            return null
+        }
+        return pathSegments[statusIndex + 1]
     }
 
     private fun parseSheetIdFromInputUrl(): String? {
@@ -173,7 +194,10 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
     companion object {
-        private const val TAG = "MainActivity"
+        private const val TAG = "TwitterThreadBackup"
+
+        private val TWEET_URL_REGEX = Regex("^https?://(mobile\\.|www\\.)?twitter.com/.*/status(es)?/.*")
+        private val TWEET_URL_REGEX_PATH_BEFORE_ID = Regex("^status(es)?$")
 
         private const val SHEET_URL_SCHEME = "https"
         private const val SHEET_URL_HOST = "docs.google.com"

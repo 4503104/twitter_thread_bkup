@@ -28,14 +28,33 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:visibility="visible" />
 
-    <com.google.android.gms.common.SignInButton
-        android:id="@+id/sign_in_button"
+    <TextView
+        android:id="@+id/from_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"
+        android:text="@string/from"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/main_message" />
+
+    <EditText
+        android:id="@+id/tweet_url_form"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="@string/input_tweet_url_hint"
+        android:importantForAutofill="no"
+        android:inputType="textUri|textMultiLine"
+        app:layout_constraintTop_toBottomOf="@id/from_label"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/to_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/to"
+        app:layout_constraintTop_toBottomOf="@id/tweet_url_form"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
         android:id="@+id/sheet_url_form"
@@ -44,26 +63,33 @@
         android:hint="@string/input_sheet_url_hint"
         android:importantForAutofill="no"
         android:inputType="textUri|textMultiLine"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/main_message" />
+        app:layout_constraintTop_toBottomOf="@id/to_label"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/backup_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:text="@string/backup"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/sheet_url_form" />
+        app:layout_constraintTop_toBottomOf="@id/sheet_url_form"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.constraintlayout.widget.Group
-        android:id="@+id/url_form_group"
+        android:id="@+id/ui_for_signed_in_user"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="backup_button,sheet_url_form"
+        app:constraint_referenced_ids="sign_out_button,from_label,tweet_url_form,to_label,sheet_url_form,backup_button"
         tools:visibility="visible" />
+
+    <com.google.android.gms.common.SignInButton
+        android:id="@+id/sign_in_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

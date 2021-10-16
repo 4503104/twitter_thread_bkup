@@ -3,9 +3,13 @@
     <string name="sign_in_message">Please Sign In</string>
     <string name="sign_out">Sign Out</string>
     <string name="already_signed_in_message">Hello, %1$s!</string>
-    <string name="input_sheet_url_hint">Input your SpreadSheet URL</string>
+    <string name="input_tweet_url_hint">Tweet URL to load</string>
+    <string name="input_sheet_url_hint">SpreadSheet URL to save</string>
     <string name="backup">Back Up</string>
+    <string name="from">from</string>
+    <string name="to">to</string>
     <string name="done_message">Backup succeeded.</string>
-    <string name="error_message_invalid_url">Invalid URL.</string>
+    <string name="error_message_invalid_tweet_url">Invalid Tweet URL.</string>
+    <string name="error_message_invalid_sheet_url">Invalid SpreadSheet URL.</string>
     <string name="error_message_failed">Failed to backup.</string>
 </resources>
