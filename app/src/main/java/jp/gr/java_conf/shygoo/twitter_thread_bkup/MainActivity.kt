@@ -26,6 +26,7 @@ import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.api.services.sheets.v4.model.ValueRange
+import jp.gr.java_conf.shygoo.twitter_thread_bkup.twitter.TwitterRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,12 +41,15 @@ class MainActivity : AppCompatActivity() {
     private val tweetUrlForm: EditText by lazy { findViewById(R.id.tweet_url_form) }
     private val sheetUrlForm: EditText by lazy { findViewById(R.id.sheet_url_form) }
     private val backUpButton: Button by lazy { findViewById(R.id.backup_button) }
+
+    // Twitter
+    private val twitterRepository = TwitterRepository()
+
+    // Google SpreadSheets
     private val credential: GoogleAccountCredential by lazy {
         GoogleAccountCredential.usingOAuth2(this, Collections.singleton(SheetsScopes.SPREADSHEETS))
     }
-
     private lateinit var googleSignInClient: GoogleSignInClient
-
     private val startSignIn = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -120,16 +124,33 @@ class MainActivity : AppCompatActivity() {
         backUpButton.isEnabled = false
 
         lifecycleScope.launch {
-            val isSucceeded = writeSomethingTo(account, sheetId)
-            withContext(Dispatchers.Main) {
-                showToast(if (isSucceeded) R.string.done_message else R.string.error_message_failed)
-                backUpButton.isEnabled = true
+
+            // Get the target tweet
+            val baseTweet = twitterRepository.getTweetById(tweetId)
+            if (baseTweet == null) {
+                completeBackup(R.string.error_message_tweet_not_found)
+                return@launch
             }
+
+            // Write to the sheet
+            val isSucceeded = writeSomethingTo(account, sheetId)
+            val resultMesage = if (isSucceeded) {
+                R.string.done_message
+            } else {
+                R.string.error_message_failed
+            }
+            completeBackup(resultMesage)
         }
+    }
+
+    private suspend fun completeBackup(@StringRes resultMesage: Int) = withContext(Dispatchers.Main){
+        backUpButton.isEnabled = true
+        showToast(resultMesage)
     }
 
     private fun parseTweetIdFromInputUrl(): String? {
         val maybeUrl = tweetUrlForm.text?.toString()
+        Log.d(TAG, "Tweet URL: $maybeUrl")
         if (maybeUrl.isNullOrEmpty() || maybeUrl.matches(TWEET_URL_REGEX).not()) {
             return null
         }
@@ -144,6 +165,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun parseSheetIdFromInputUrl(): String? {
         val maybeUrl = sheetUrlForm.text?.toString()
+        Log.d(TAG, "SpreadSheet URL: $maybeUrl")
         if (maybeUrl.isNullOrEmpty() || maybeUrl.startsWith(SHEET_URL_PREFIX_PETTERN).not()) {
             return null
         }
@@ -194,7 +216,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
     companion object {
-        private const val TAG = "TwitterThreadBackup"
+        private const val TAG = "MainActivity"
 
         private val TWEET_URL_REGEX = Regex("^https?://(mobile\\.|www\\.)?twitter.com/.*/status(es)?/.*")
         private val TWEET_URL_REGEX_PATH_BEFORE_ID = Regex("^status(es)?$")

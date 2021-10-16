@@ -10,6 +10,7 @@
     <string name="to">to</string>
     <string name="done_message">Backup succeeded.</string>
     <string name="error_message_invalid_tweet_url">Invalid Tweet URL.</string>
+    <string name="error_message_tweet_not_found">Tweet not found.</string>
     <string name="error_message_invalid_sheet_url">Invalid SpreadSheet URL.</string>
     <string name="error_message_failed">Failed to backup.</string>
 </resources>
