@@ -10,7 +10,8 @@ interface TwitterApi {
     @GET("tweets")
     suspend fun getTweetsByIds(
         @Header("Authorization") accessToken: String,
-        @Query("ids") ids: String
+        @Query("ids") ids: String,
+        @Query("tweet.fields") tweetFields: String? = null,
     ): ResponseBody
 
     companion object {

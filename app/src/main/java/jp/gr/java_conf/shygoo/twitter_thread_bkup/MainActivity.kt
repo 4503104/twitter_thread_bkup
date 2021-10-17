@@ -131,6 +131,7 @@ class MainActivity : AppCompatActivity() {
                 completeBackup(R.string.error_message_tweet_not_found)
                 return@launch
             }
+            Log.d(TAG, "baseTweet: $baseTweet")
 
             // Write to the sheet
             val isSucceeded = writeSomethingTo(account, sheetId)
