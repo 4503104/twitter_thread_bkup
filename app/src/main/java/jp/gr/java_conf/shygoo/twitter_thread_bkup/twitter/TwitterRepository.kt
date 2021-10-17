@@ -5,8 +5,6 @@ import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import jp.gr.java_conf.shygoo.twitter_thread_bkup.BuildConfig
 import jp.gr.java_conf.shygoo.twitter_thread_bkup.twitter.model.Tweet
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import java.lang.Exception
@@ -22,18 +20,18 @@ class TwitterRepository {
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .create()
 
-    suspend fun getTweetById(tweetId: String): Tweet? = withContext(Dispatchers.IO) {
+    suspend fun getTweetById(tweetId: String): Tweet? {
         try {
             val response = api.getTweetById(
                 accessToken = accessToken,
                 id = tweetId,
                 tweetMode = "extended"
             )
-            return@withContext parse(response)
+            return parse(response)
         } catch (e: Exception) {
             Log.w(TAG, "Get tweet failed.", e)
-            return@withContext null
         }
+        return null
     }
 
     private fun parse(response: ResponseBody): Tweet? {

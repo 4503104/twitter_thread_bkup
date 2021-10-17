@@ -28,10 +28,10 @@ import com.google.api.services.sheets.v4.SheetsScopes
 import com.google.api.services.sheets.v4.model.ValueRange
 import jp.gr.java_conf.shygoo.twitter_thread_bkup.twitter.TwitterRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Collections
-import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
     private val mainMessage: TextView by lazy { findViewById(R.id.main_message) }
@@ -123,30 +123,55 @@ class MainActivity : AppCompatActivity() {
 
         backUpButton.isEnabled = false
 
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {
+            // Prepare to write
+            val sheetsApi = createSheetsApi(account)
 
-            // Get the target tweet
-            val baseTweet = twitterRepository.getTweetById(tweetId)
-            if (baseTweet == null) {
-                completeBackup(R.string.error_message_tweet_not_found)
-                return@launch
-            }
-            Log.d(TAG, "baseTweet: $baseTweet")
+            // Track replies back to the root tweet
+            var rowNumber = 0
+            var currentTweet = twitterRepository.getTweetById(tweetId)
+            var resultMesage = R.string.error_message_tweet_not_found
+            while (currentTweet != null) {
+                // Write the tweet data to the SpreadSheet
+                val rowData = listOf<Any>(
+                    currentTweet.createdAt,
+                    currentTweet.text,
+                    String.format(
+                        TWEET_URL_FORMAT,
+                        currentTweet.user.screenName,
+                        currentTweet.id
+                    )
+                )
+                val content = ValueRange()
+                    .setValues(listOf(rowData))
+                    .setMajorDimension("ROWS")
+                rowNumber++
+                val range = "A$rowNumber:C$rowNumber"
+                val isSucceeded = writeRow(sheetsApi, sheetId, range, content)
+                if (isSucceeded.not()) {
+                    resultMesage = R.string.error_message_failed_to_write
+                    break
+                }
 
-            // Write to the sheet
-            val isSucceeded = writeSomethingTo(account, sheetId)
-            val resultMesage = if (isSucceeded) {
-                R.string.done_message
-            } else {
-                R.string.error_message_failed
+                // Check if the tweet is a reply (having a parent tweet)
+                val parentTweetId = currentTweet.replyTo
+                if (parentTweetId.isNullOrEmpty()) {
+                    // Reached the root tweet
+                    resultMesage = R.string.done_message
+                    break
+                }
+
+                // Load the next(=parent) tweet
+                delay(API_CALL_INTERVAL_MILLIS) // Avoid API call limitation
+                currentTweet = twitterRepository.getTweetById(parentTweetId)
             }
-            completeBackup(resultMesage)
+
+            // Show result
+            withContext(Dispatchers.Main){
+                backUpButton.isEnabled = true
+                showToast(resultMesage)
+            }
         }
-    }
-
-    private suspend fun completeBackup(@StringRes resultMesage: Int) = withContext(Dispatchers.Main){
-        backUpButton.isEnabled = true
-        showToast(resultMesage)
     }
 
     private fun parseTweetIdFromInputUrl(): String? {
@@ -178,37 +203,31 @@ class MainActivity : AppCompatActivity() {
         return pathSegments[SHEET_URL_SHEET_ID_POSITION]
     }
 
-    private suspend fun writeSomethingTo(
-        signInAccount: GoogleSignInAccount,
-        sheetId: String
-    ): Boolean = withContext(Dispatchers.IO) {
+    private fun createSheetsApi(signInAccount: GoogleSignInAccount): Sheets {
         credential.selectedAccount = signInAccount.account
-        val sheetsApi = Sheets
+        return Sheets
             .Builder(NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
             .setApplicationName(getString(R.string.app_name))
             .build()
+    }
 
-        val range = "A1:B100"
-
-        val dummyValues: MutableList<List<Any>> = mutableListOf()
-        for (i in 1..100) {
-            dummyValues.add(listOf("$i.", UUID.randomUUID().toString()))
-        }
-        val contents = ValueRange()
-            .setValues(dummyValues)
-            .setMajorDimension("ROWS")
-
+    private fun writeRow(
+        sheetsApi: Sheets,
+        sheetId: String,
+        range: String,
+        content: ValueRange,
+    ): Boolean {
         try {
             sheetsApi.spreadsheets()
                 .values()
-                .update(sheetId, range, contents)
+                .update(sheetId, range, content)
                 .setValueInputOption("RAW")
                 .execute()
-            return@withContext true
+            return true
         } catch (e: Exception) {
             Log.e(TAG, "Backup failed.", e)
         }
-        return@withContext false
+        return false
     }
 
     private fun showToast(@StringRes messageId: Int) = showToast(getString(messageId))
@@ -219,6 +238,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "MainActivity"
 
+        private const val TWEET_URL_FORMAT = "https://twitter.com/%s/status/%s"
         private val TWEET_URL_REGEX = Regex("^https?://(mobile\\.|www\\.)?twitter.com/.*/status(es)?/.*")
         private val TWEET_URL_REGEX_PATH_BEFORE_ID = Regex("^status(es)?$")
 
@@ -230,5 +250,7 @@ class MainActivity : AppCompatActivity() {
             "$SHEET_URL_SCHEME://$SHEET_URL_HOST/$SHEET_URL_PATH1/$SHEET_URL_PATH2/"
         private const val SHEET_URL_MINIMUM_PATH_COUNT = 3
         private const val SHEET_URL_SHEET_ID_POSITION = 2
+
+        private const val API_CALL_INTERVAL_MILLIS = 1_000L
     }
 }
