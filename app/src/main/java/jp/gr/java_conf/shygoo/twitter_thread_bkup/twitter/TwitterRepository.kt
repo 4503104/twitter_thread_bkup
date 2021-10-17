@@ -2,11 +2,9 @@ package jp.gr.java_conf.shygoo.twitter_thread_bkup.twitter
 
 import android.util.Log
 import com.google.gson.FieldNamingPolicy
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import jp.gr.java_conf.shygoo.twitter_thread_bkup.BuildConfig
 import jp.gr.java_conf.shygoo.twitter_thread_bkup.twitter.model.Tweet
-import jp.gr.java_conf.shygoo.twitter_thread_bkup.twitter.model.TweetsResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
@@ -26,23 +24,23 @@ class TwitterRepository {
 
     suspend fun getTweetById(tweetId: String): Tweet? = withContext(Dispatchers.IO) {
         try {
-            val response = api.getTweetsByIds(
+            val response = api.getTweetById(
                 accessToken = accessToken,
-                ids = tweetId,
-                tweetFields = "created_at,author_id,conversation_id"
+                id = tweetId,
+                tweetMode = "extended"
             )
-            return@withContext parse(response)?.data?.firstOrNull()
+            return@withContext parse(response)
         } catch (e: Exception) {
             Log.w(TAG, "Get tweet failed.", e)
             return@withContext null
         }
     }
 
-    private fun parse(response: ResponseBody): TweetsResponse? {
+    private fun parse(response: ResponseBody): Tweet? {
         val json = response.string()
         Log.d(TAG, "raw JSON: $json")
 
-        return gson.fromJson(json, TweetsResponse::class.java)
+        return gson.fromJson(json, Tweet::class.java)
     }
 
     companion object {

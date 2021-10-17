@@ -7,14 +7,14 @@ import retrofit2.http.Query
 
 interface TwitterApi {
 
-    @GET("tweets")
-    suspend fun getTweetsByIds(
+    @GET("/1.1/statuses/show.json")
+    suspend fun getTweetById(
         @Header("Authorization") accessToken: String,
-        @Query("ids") ids: String,
-        @Query("tweet.fields") tweetFields: String? = null,
+        @Query("id") id: String = "",
+        @Query("tweet_mode") tweetMode: String? = null,
     ): ResponseBody
 
     companion object {
-        const val BASE_URL = "https://api.twitter.com/2/"
+        const val BASE_URL = "https://api.twitter.com"
     }
 }
