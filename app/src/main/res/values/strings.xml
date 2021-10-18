@@ -5,6 +5,7 @@
     <string name="already_signed_in_message">Hello, %1$s!</string>
     <string name="input_tweet_url_hint">The last reply tweet URL in the thread</string>
     <string name="input_spreadsheet_url_hint">SpreadSheet URL to save</string>
+    <string name="input_max_count_hint">Maximum count</string>
     <string name="backup">Back Up</string>
     <string name="from">from</string>
     <string name="to">to</string>
@@ -12,5 +13,6 @@
     <string name="error_message_invalid_tweet_url">Invalid Tweet URL.</string>
     <string name="error_message_tweet_not_found">Tweet not found.</string>
     <string name="error_message_invalid_spreadsheet_url">Invalid SpreadSheet URL.</string>
+    <string name="error_message_invalid_max_count">Invalid maximum count.</string>
     <string name="error_message_failed_to_write">SpreadSheet writing error.</string>
 </resources>

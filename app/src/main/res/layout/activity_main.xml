@@ -44,8 +44,8 @@
         android:hint="@string/input_tweet_url_hint"
         android:importantForAutofill="no"
         android:inputType="textUri|textMultiLine"
-        app:layout_constraintTop_toBottomOf="@id/from_label"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/from_label" />
 
     <TextView
         android:id="@+id/to_label"
@@ -53,8 +53,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="@string/to"
-        app:layout_constraintTop_toBottomOf="@id/tweet_url_form"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tweet_url_form" />
 
     <EditText
         android:id="@+id/spreadsheet_url_form"
@@ -63,8 +63,18 @@
         android:hint="@string/input_spreadsheet_url_hint"
         android:importantForAutofill="no"
         android:inputType="textUri|textMultiLine"
-        app:layout_constraintTop_toBottomOf="@id/to_label"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/to_label" />
+
+    <EditText
+        android:id="@+id/max_count_form"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="@string/input_max_count_hint"
+        android:inputType="number"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spreadsheet_url_form" />
 
     <Button
         android:id="@+id/backup_button"
@@ -72,8 +82,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="@string/backup"
-        app:layout_constraintTop_toBottomOf="@id/spreadsheet_url_form"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spreadsheet_url_form" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/ui_for_signed_in_user"

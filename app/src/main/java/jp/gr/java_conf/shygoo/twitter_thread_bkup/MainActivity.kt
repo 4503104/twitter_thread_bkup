@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.lang.NumberFormatException
 import java.util.Collections
 
 @Suppress("SameParameterValue")
@@ -47,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private val signedInUI: Group by lazy { findViewById(R.id.ui_for_signed_in_user) }
     private val tweetUrlForm: EditText by lazy { findViewById(R.id.tweet_url_form) }
     private val spreadsheetUrlForm: EditText by lazy { findViewById(R.id.spreadsheet_url_form) }
+    private val maxCountForm: EditText by lazy { findViewById(R.id.max_count_form) }
     private val backUpButton: Button by lazy { findViewById(R.id.backup_button) }
 
     // Twitter
@@ -128,6 +130,13 @@ class MainActivity : AppCompatActivity() {
         }
         Log.d(TAG, "SpreadSheet ID: $spreadsheetId")
 
+        val maxCount = parseMaxCountFromInputText()
+        if (maxCount == null) {
+            showToast(R.string.error_message_invalid_max_count)
+            return
+        }
+        Log.d(TAG, "Maximum Count: $maxCount")
+
         backUpButton.isEnabled = false
 
         lifecycleScope.launch(Dispatchers.IO) {
@@ -159,7 +168,7 @@ class MainActivity : AppCompatActivity() {
 
                 // Check if the tweet is a reply (having a parent tweet)
                 val parentTweetId = currentTweet.replyTo
-                if (parentTweetId.isNullOrEmpty()) {
+                if (parentTweetId.isNullOrEmpty() || rowNumber == maxCount) {
                     // Reached the root tweet
                     resultMesage = R.string.done_message
                     break
@@ -171,10 +180,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Reverse sort
-            val columnCount = 4
-            val sortKeyIndex = 3
-            reverseSort(sheetsApi, spreadsheetId, sortKeyIndex, columnCount, rowNumber)
-            clearSortKeyColumn(sheetsApi, spreadsheetId, sortKeyIndex, rowNumber)
+            if (rowNumber > 0) {
+                val columnCount = 4
+                val sortKeyIndex = 3
+                reverseSort(sheetsApi, spreadsheetId, sortKeyIndex, columnCount, rowNumber)
+                clearSortKeyColumn(sheetsApi, spreadsheetId, sortKeyIndex, rowNumber)
+            }
 
             // Show result
             withContext(Dispatchers.Main) {
@@ -211,6 +222,19 @@ class MainActivity : AppCompatActivity() {
             return null
         }
         return pathSegments[SPREADSHEET_ID_POSITION]
+    }
+
+    private fun parseMaxCountFromInputText(): Int? {
+        val maybeMaxCount = maxCountForm.text?.toString()
+        if (maybeMaxCount.isNullOrEmpty()) {
+            return Int.MAX_VALUE
+        }
+        val maxCount = try {
+            maybeMaxCount.toInt()
+        } catch (e: NumberFormatException) {
+            return null
+        }
+        return if (maxCount > 0) maxCount else null
     }
 
     private fun createSheetsApi(signInAccount: GoogleSignInAccount): Sheets {
