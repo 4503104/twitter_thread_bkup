@@ -167,7 +167,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Show result
-            withContext(Dispatchers.Main){
+            withContext(Dispatchers.Main) {
                 backUpButton.isEnabled = true
                 showToast(resultMesage)
             }
@@ -239,7 +239,8 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
 
         private const val TWEET_URL_FORMAT = "https://twitter.com/%s/status/%s"
-        private val TWEET_URL_REGEX = Regex("^https?://(mobile\\.|www\\.)?twitter.com/.*/status(es)?/.*")
+        private val TWEET_URL_REGEX =
+            Regex("^https?://(mobile\\.|www\\.)?twitter.com/.*/status(es)?/.*")
         private val TWEET_URL_REGEX_PATH_BEFORE_ID = Regex("^status(es)?$")
 
         private const val SHEET_URL_SCHEME = "https"
