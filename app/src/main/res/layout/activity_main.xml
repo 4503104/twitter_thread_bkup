@@ -90,7 +90,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="sign_out_button,from_label,tweet_url_form,to_label,spreadsheet_url_form,backup_button"
+        app:constraint_referenced_ids="sign_out_button,from_label,tweet_url_form,to_label,spreadsheet_url_form,max_count_form,backup_button"
         tools:visibility="visible" />
 
     <com.google.android.gms.common.SignInButton
