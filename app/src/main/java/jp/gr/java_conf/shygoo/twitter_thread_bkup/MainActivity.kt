@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
             // Track replies back to the root tweet
             var rowNumber = 0
             var currentTweet = twitterRepository.getTweetById(tweetId)
-            var resultMesage = R.string.error_message_tweet_not_found
+            var resultMessage = R.string.error_message_tweet_not_found
             while (currentTweet != null) {
                 // Write the tweet data to the SpreadSheet
                 rowNumber++
@@ -162,7 +162,7 @@ class MainActivity : AppCompatActivity() {
                 )
                 val isSucceeded = writeRow(sheetsApi, spreadsheetId, rowNumber, rowData)
                 if (isSucceeded.not()) {
-                    resultMesage = R.string.error_message_failed_to_write
+                    resultMessage = R.string.error_message_failed_to_write
                     break
                 }
 
@@ -170,7 +170,7 @@ class MainActivity : AppCompatActivity() {
                 val parentTweetId = currentTweet.replyTo
                 if (parentTweetId.isNullOrEmpty() || rowNumber == maxCount) {
                     // Reached the root tweet
-                    resultMesage = R.string.done_message
+                    resultMessage = R.string.done_message
                     break
                 }
 
@@ -190,7 +190,7 @@ class MainActivity : AppCompatActivity() {
             // Show result
             withContext(Dispatchers.Main) {
                 backUpButton.isEnabled = true
-                showToast(resultMesage)
+                showToast(resultMessage)
             }
         }
     }
