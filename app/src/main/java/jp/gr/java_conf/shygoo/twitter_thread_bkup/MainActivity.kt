@@ -25,6 +25,12 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.sheets.v4.Sheets
 import com.google.api.services.sheets.v4.SheetsScopes
+import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest
+import com.google.api.services.sheets.v4.model.ClearValuesRequest
+import com.google.api.services.sheets.v4.model.GridRange
+import com.google.api.services.sheets.v4.model.Request
+import com.google.api.services.sheets.v4.model.SortRangeRequest
+import com.google.api.services.sheets.v4.model.SortSpec
 import com.google.api.services.sheets.v4.model.ValueRange
 import jp.gr.java_conf.shygoo.twitter_thread_bkup.twitter.TwitterRepository
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +39,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Collections
 
+@Suppress("SameParameterValue")
 class MainActivity : AppCompatActivity() {
     private val mainMessage: TextView by lazy { findViewById(R.id.main_message) }
     private val signInButton: SignInButton by lazy { findViewById(R.id.sign_in_button) }
@@ -133,6 +140,7 @@ class MainActivity : AppCompatActivity() {
             var resultMesage = R.string.error_message_tweet_not_found
             while (currentTweet != null) {
                 // Write the tweet data to the SpreadSheet
+                rowNumber++
                 val rowData = listOf<Any>(
                     currentTweet.createdAt,
                     currentTweet.text,
@@ -140,14 +148,10 @@ class MainActivity : AppCompatActivity() {
                         TWEET_URL_FORMAT,
                         currentTweet.user.screenName,
                         currentTweet.id
-                    )
+                    ),
+                    rowNumber,
                 )
-                val content = ValueRange()
-                    .setValues(listOf(rowData))
-                    .setMajorDimension("ROWS")
-                rowNumber++
-                val range = "A$rowNumber:C$rowNumber"
-                val isSucceeded = writeRow(sheetsApi, spreadsheetId, range, content)
+                val isSucceeded = writeRow(sheetsApi, spreadsheetId, rowNumber, rowData)
                 if (isSucceeded.not()) {
                     resultMesage = R.string.error_message_failed_to_write
                     break
@@ -165,6 +169,12 @@ class MainActivity : AppCompatActivity() {
                 delay(API_CALL_INTERVAL_MILLIS) // Avoid API call limitation
                 currentTweet = twitterRepository.getTweetById(parentTweetId)
             }
+
+            // Reverse sort
+            val columnCount = 4
+            val sortKeyIndex = 3
+            reverseSort(sheetsApi, spreadsheetId, sortKeyIndex, columnCount, rowNumber)
+            clearSortKeyColumn(sheetsApi, spreadsheetId, sortKeyIndex, rowNumber)
 
             // Show result
             withContext(Dispatchers.Main) {
@@ -214,9 +224,13 @@ class MainActivity : AppCompatActivity() {
     private fun writeRow(
         sheetsApi: Sheets,
         spreadsheetId: String,
-        range: String,
-        content: ValueRange,
+        rowNumber: Int,
+        rowData: List<Any>
     ): Boolean {
+        val range = "A$rowNumber:${'A' + rowData.lastIndex}$rowNumber"
+        val content = ValueRange()
+            .setValues(listOf(rowData))
+            .setMajorDimension("ROWS")
         try {
             sheetsApi.spreadsheets()
                 .values()
@@ -228,6 +242,61 @@ class MainActivity : AppCompatActivity() {
             Log.e(TAG, "Backup failed.", e)
         }
         return false
+    }
+
+    private fun reverseSort(
+        sheetsApi: Sheets,
+        spreadsheetId: String,
+        sortKeyIndex: Int,
+        columnCount: Int,
+        rowCount: Int,
+    ) {
+        val gridRange = GridRange()
+        gridRange.sheetId = 0
+        gridRange.startColumnIndex = 0
+        gridRange.startRowIndex = 0
+        gridRange.endColumnIndex = columnCount
+        gridRange.endRowIndex = rowCount
+
+        val sortSpec = SortSpec()
+        sortSpec.sortOrder = "DESCENDING"
+        sortSpec.dimensionIndex = sortKeyIndex
+
+        val sortRangeRequest = SortRangeRequest()
+        sortRangeRequest.range = gridRange
+        sortRangeRequest.sortSpecs = listOf(sortSpec)
+
+        val request = Request()
+        request.sortRange = sortRangeRequest
+
+        val batchUpdateSpreadsheetRequest = BatchUpdateSpreadsheetRequest()
+        batchUpdateSpreadsheetRequest.requests = listOf(request)
+
+        try {
+            sheetsApi.spreadsheets()
+                .batchUpdate(spreadsheetId, batchUpdateSpreadsheetRequest)
+                .execute()
+        } catch (e: Exception) {
+            Log.e(TAG, "Sort failed.", e)
+        }
+    }
+
+    private fun clearSortKeyColumn(
+        sheetsApi: Sheets,
+        spreadsheetId: String,
+        columnIndex: Int,
+        rowCount: Int,
+    ) {
+        val column = 'A' + columnIndex
+        val range = "${column}1:$column$rowCount"
+        try {
+            sheetsApi.spreadsheets()
+                .values()
+                .clear(spreadsheetId, range, ClearValuesRequest())
+                .execute()
+        } catch (e: Exception) {
+            Log.e(TAG, "Clear column $column failed.", e)
+        }
     }
 
     private fun showToast(@StringRes messageId: Int) = showToast(getString(messageId))
