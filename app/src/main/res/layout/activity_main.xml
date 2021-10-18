@@ -57,10 +57,10 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
-        android:id="@+id/sheet_url_form"
+        android:id="@+id/spreadsheet_url_form"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="@string/input_sheet_url_hint"
+        android:hint="@string/input_spreadsheet_url_hint"
         android:importantForAutofill="no"
         android:inputType="textUri|textMultiLine"
         app:layout_constraintTop_toBottomOf="@id/to_label"
@@ -72,7 +72,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="@string/backup"
-        app:layout_constraintTop_toBottomOf="@id/sheet_url_form"
+        app:layout_constraintTop_toBottomOf="@id/spreadsheet_url_form"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <androidx.constraintlayout.widget.Group
@@ -80,7 +80,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="sign_out_button,from_label,tweet_url_form,to_label,sheet_url_form,backup_button"
+        app:constraint_referenced_ids="sign_out_button,from_label,tweet_url_form,to_label,spreadsheet_url_form,backup_button"
         tools:visibility="visible" />
 
     <com.google.android.gms.common.SignInButton

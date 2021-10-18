@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     private val signOutButton: Button by lazy { findViewById(R.id.sign_out_button) }
     private val signedInUI: Group by lazy { findViewById(R.id.ui_for_signed_in_user) }
     private val tweetUrlForm: EditText by lazy { findViewById(R.id.tweet_url_form) }
-    private val sheetUrlForm: EditText by lazy { findViewById(R.id.sheet_url_form) }
+    private val spreadsheetUrlForm: EditText by lazy { findViewById(R.id.spreadsheet_url_form) }
     private val backUpButton: Button by lazy { findViewById(R.id.backup_button) }
 
     // Twitter
@@ -114,12 +114,12 @@ class MainActivity : AppCompatActivity() {
         }
         Log.d(TAG, "Tweet ID: $tweetId")
 
-        val sheetId = parseSheetIdFromInputUrl()
-        if (sheetId == null) {
-            showToast(R.string.error_message_invalid_sheet_url)
+        val spreadsheetId = parseSpreadsheetIdFromInputUrl()
+        if (spreadsheetId == null) {
+            showToast(R.string.error_message_invalid_spreadsheet_url)
             return
         }
-        Log.d(TAG, "Sheet ID: $sheetId")
+        Log.d(TAG, "SpreadSheet ID: $spreadsheetId")
 
         backUpButton.isEnabled = false
 
@@ -147,7 +147,7 @@ class MainActivity : AppCompatActivity() {
                     .setMajorDimension("ROWS")
                 rowNumber++
                 val range = "A$rowNumber:C$rowNumber"
-                val isSucceeded = writeRow(sheetsApi, sheetId, range, content)
+                val isSucceeded = writeRow(sheetsApi, spreadsheetId, range, content)
                 if (isSucceeded.not()) {
                     resultMesage = R.string.error_message_failed_to_write
                     break
@@ -189,18 +189,18 @@ class MainActivity : AppCompatActivity() {
         return pathSegments[statusIndex + 1]
     }
 
-    private fun parseSheetIdFromInputUrl(): String? {
-        val maybeUrl = sheetUrlForm.text?.toString()
+    private fun parseSpreadsheetIdFromInputUrl(): String? {
+        val maybeUrl = spreadsheetUrlForm.text?.toString()
         Log.d(TAG, "SpreadSheet URL: $maybeUrl")
-        if (maybeUrl.isNullOrEmpty() || maybeUrl.startsWith(SHEET_URL_PREFIX_PETTERN).not()) {
+        if (maybeUrl.isNullOrEmpty() || maybeUrl.startsWith(SPREAD_SHEET_URL_PREFIX_PETTERN).not()) {
             return null
         }
         val uri = Uri.parse(maybeUrl)
         val pathSegments = uri.pathSegments
-        if (pathSegments.size < SHEET_URL_MINIMUM_PATH_COUNT) {
+        if (pathSegments.lastIndex < SPREADSHEET_ID_POSITION) {
             return null
         }
-        return pathSegments[SHEET_URL_SHEET_ID_POSITION]
+        return pathSegments[SPREADSHEET_ID_POSITION]
     }
 
     private fun createSheetsApi(signInAccount: GoogleSignInAccount): Sheets {
@@ -213,14 +213,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun writeRow(
         sheetsApi: Sheets,
-        sheetId: String,
+        spreadsheetId: String,
         range: String,
         content: ValueRange,
     ): Boolean {
         try {
             sheetsApi.spreadsheets()
                 .values()
-                .update(sheetId, range, content)
+                .update(spreadsheetId, range, content)
                 .setValueInputOption("RAW")
                 .execute()
             return true
@@ -243,14 +243,9 @@ class MainActivity : AppCompatActivity() {
             Regex("^https?://(mobile\\.|www\\.)?twitter.com/.*/status(es)?/.*")
         private val TWEET_URL_REGEX_PATH_BEFORE_ID = Regex("^status(es)?$")
 
-        private const val SHEET_URL_SCHEME = "https"
-        private const val SHEET_URL_HOST = "docs.google.com"
-        private const val SHEET_URL_PATH1 = "spreadsheets"
-        private const val SHEET_URL_PATH2 = "d"
-        private const val SHEET_URL_PREFIX_PETTERN =
-            "$SHEET_URL_SCHEME://$SHEET_URL_HOST/$SHEET_URL_PATH1/$SHEET_URL_PATH2/"
-        private const val SHEET_URL_MINIMUM_PATH_COUNT = 3
-        private const val SHEET_URL_SHEET_ID_POSITION = 2
+        private const val SPREAD_SHEET_URL_PREFIX_PETTERN =
+            "https://docs.google.com/spreadsheets/d/"
+        private const val SPREADSHEET_ID_POSITION = 2
 
         private const val API_CALL_INTERVAL_MILLIS = 1_000L
     }
