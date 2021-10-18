@@ -81,6 +81,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun prepareGoogleSignIn() {
         val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
             .requestScopes(Scope(SheetsScopes.SPREADSHEETS))
             .build()
         googleSignInClient = GoogleSignIn.getClient(this, options)
