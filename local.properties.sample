@@ -1,5 +1,4 @@
-sdk.dir=/Users/MyName/Library/Android/sdk
+sdk.dir=/foo/bar/baz
 
-TWITTER_API_KEY=foo
-TWITTER_API_KEY_SECRET=bar
-TWITTER_BEARER_TOKEN=baz
+# Please add this line to your local.properties
+TWITTER_BEARER_TOKEN=your_token
