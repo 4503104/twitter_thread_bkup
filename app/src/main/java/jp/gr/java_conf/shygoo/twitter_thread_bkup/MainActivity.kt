@@ -142,13 +142,13 @@ class MainActivity : AppCompatActivity() {
                 // Write the tweet data to the SpreadSheet
                 rowNumber++
                 val rowData = listOf<Any>(
-                    currentTweet.createdAt,
                     currentTweet.text,
                     String.format(
                         TWEET_URL_FORMAT,
                         currentTweet.user.screenName,
                         currentTweet.id
                     ),
+                    currentTweet.createdAt,
                     rowNumber,
                 )
                 val isSucceeded = writeRow(sheetsApi, spreadsheetId, rowNumber, rowData)
